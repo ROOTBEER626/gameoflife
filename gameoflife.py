@@ -1,4 +1,4 @@
-#If a ccell is alive, and 2 or 3 of it's neighbours are alive, the cell reamins alive
+#If a cell is alive, and 2 or 3 of it's neighbours are alive, the cell reamins alive
 #if a cell is alive and it has more than 3 alive neighbours, it dies of overcrowding
 #i a cell is alive and it has fewer than 2 alive neighbours, it dies of loneliness
 #if a cell is dead and it has exatly 3 neighbours it becomes alive again
@@ -45,7 +45,8 @@ class CellGrid(Canvas):
         Canvas.__init__(self, master, width = cellSize * columnNumber, height = cellSize * rowNumber, *args, **kwargs)
 
         self.cellSize = cellSize
-
+        self.alive = []
+        self.dead = []
         
         self.grid = []
         for row in range(rowNumber):
@@ -55,6 +56,7 @@ class CellGrid(Canvas):
 
             self.grid.append(line)
 
+        self.initilize_dead()
         #memorize the cells that have been modified to avoid many switching of state during mouse motion
         self.switched = []
 
@@ -85,6 +87,7 @@ class CellGrid(Canvas):
         cell.draw()
         #add the cell to the list of cell switched during the click
         self.switched.append(cell)
+        self.update_dead_or_alive(cell)
 
     def handleMouseMotion(self, event):
         row, column = self.__eventCoords(event)
@@ -94,6 +97,22 @@ class CellGrid(Canvas):
             cell._switch()
             cell.draw()
             self.switched.append(cell)
+
+    def initilize_dead(self):
+        #50 by 50 grid
+        for line in self.grid:
+            for cell in line:
+                self.dead.append(cell)
+        
+
+    def update_dead_or_alive(self, cell):
+        if cell in self.dead:
+            self.dead.remove(cell)
+            self.alive.append(cell)
+        elif cell in self.alive:
+            self.alive.remove(cell)
+            self.dead.append(cell)
+        print(self.alive)
 
     def animate(self):
         while True:
