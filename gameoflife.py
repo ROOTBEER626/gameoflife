@@ -99,7 +99,6 @@ class CellGrid(Canvas):
             self.switched.append(cell)
 
     def initilize_dead(self):
-        #50 by 50 grid
         for line in self.grid:
             for cell in line:
                 self.dead.append(cell)
@@ -112,7 +111,34 @@ class CellGrid(Canvas):
         elif cell in self.alive:
             self.alive.remove(cell)
             self.dead.append(cell)
-        print(self.alive)
+        neighbors = self.get_neighbors(cell)
+        
+
+    def get_neighbors(self, cell):
+        coords = [(1,0),(-1,0),(0,1),(0,-1),(1,1),(-1,-1),(-1,1),(1,-1)]
+        if cell.abs == 49:
+            for c in coords:
+                if c[1] == 1:
+                    coords.remove(c)
+        if cell.abs == 0:
+            for c in coords:
+                if c[1] == -1:
+                    coords.remove(c)
+        if cell.ord == 49:
+            for c in coords:
+                if c[0] == 1:
+                    coords.remove(c)
+        if cell.ord == 0:
+            for c in coords:
+                if c[0] ==  -1:
+                    coords.remove(c)
+        print(coords)
+        neighbors = []
+        for n in coords:
+            neighbors.append(self.grid[cell.abs+n[1]][cell.ord+n[0]])
+        return neighbors
+
+
 
     def animate(self):
         while True:
@@ -120,16 +146,67 @@ class CellGrid(Canvas):
                 for cell in line:
                     if cell.fill == True:
                         #check that 2 or 3 neighbors are alive
-                        cell.fill == True
+                        if self.check_2_or_3_alive(cell):
+                            cell.fill = True
                     if cell.fill == True:
                         #check if it has more than 3 alive neighbors
-                        cell.fill == False
+                        if self.check_more_than_3_alive(cell):
+                            cell.fill = False
                     if cell.fill == True:
                         #check if it has fewer than 2 alive neighbords
-                        cell.fill == False
+                        if self.check_fewer_than_2_alive(cell):
+                            cell.fill = False
                     if cell.fill == False:
                         #check if it has exactly 3 alive neightbors
-                        cell.fill == True
+                        if self.check_exactly_3_alive:
+                            cell.fill = True
+
+    def check_2_or_3_alive(self, cell):
+        neighbors = self.get_neighbors(cell)
+        alive = 0
+        for c in neighbors:
+            if c.fill == True:
+                alive += 1
+        if alive == 2 or alive == 3:
+            return True
+        else:
+            return False
+
+
+    def check_more_than_3_alive(self, cell):
+        neighbors = self.get_neighbors(cell)
+        alive = 0
+        for c in neighbors:
+            if c.fill == True:
+                alive += 1
+        if alive >= 3:
+            return True
+        else:
+            return False
+
+    def check_fewer_than_2_alive(self,cell):
+        neighbors = self.get_neighbors(cell)
+        alive = 0
+        for c in neighbors:
+            if c.fill == True:
+                alive += 1
+        if alive <= 2: 
+            return True
+        else:
+            return False
+
+    def check_exactly_3_alive(self,cell):
+        neighbors = self.get_neighbors(cell)
+        alive = 0
+        for c in neighbors:
+            if c.fill == True:
+                alive += 1
+        if alive == 3:
+            return True
+        else: 
+            return False
+
+
 
 if __name__ == "__main__":
     app = Tk()
