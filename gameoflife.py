@@ -3,6 +3,7 @@
 #i a cell is alive and it has fewer than 2 alive neighbours, it dies of loneliness
 #if a cell is dead and it has exatly 3 neighbours it becomes alive again
 from tkinter import *
+import time
 
 dead_color = 'white'
 alive_color = 'blue'
@@ -20,6 +21,7 @@ class Cell():
         self.ord = y
         self.size = size
         self.fill = False
+        
 
     def _switch(self):
         self.fill = not self.fill
@@ -38,15 +40,35 @@ class Cell():
             ymin = self.ord * self.size
             ymax = ymin + self.size
 
+
+            #This returns an int not a rectangle object
             self.master.create_rectangle(xmin,ymin, xmax, ymax, fill = fill, outline = outline)
+
+
+
+    def update(self):
+
+        #if this doesn't work we are gonna have to update it the same way we do it on the mouse click event
+        fill = Cell.FILLED_COLOR_BG
+        outline = Cell.FILLED_COLOR_BORDER
+
+        if not self.fill:
+            fill = Cell.EMPTY_COLOR_BG
+            outline = Cell.EMPTY_COLOR_BORDER
+
+        xmin = self.abs * self.size
+        xmax = xmin + self.size
+        ymin = self.ord * self.size
+        ymax = ymin + self.size
+        
+        self.master.create_rectangle(xmin,ymin, xmax, ymax, fill = 'black', outline = outline)
+
 
 class CellGrid(Canvas):
     def __init__(self, master, rowNumber, columnNumber, cellSize, *args, **kwargs):
         Canvas.__init__(self, master, width = cellSize * columnNumber, height = cellSize * rowNumber, *args, **kwargs)
 
         self.cellSize = cellSize
-        self.alive = []
-        self.dead = []
         
         self.grid = []
         for row in range(rowNumber):
@@ -55,8 +77,7 @@ class CellGrid(Canvas):
                 line.append(Cell(self, column, row, cellSize))
 
             self.grid.append(line)
-
-        self.initilize_dead()
+        
         #memorize the cells that have been modified to avoid many switching of state during mouse motion
         self.switched = []
 
@@ -67,8 +88,8 @@ class CellGrid(Canvas):
         #bind release button action - clear the memory of modified cells
         self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
 
+
         self.draw()
-        #self.animate()
 
     def draw(self):
         for row in self.grid:
@@ -87,7 +108,6 @@ class CellGrid(Canvas):
         cell.draw()
         #add the cell to the list of cell switched during the click
         self.switched.append(cell)
-        self.update_dead_or_alive(cell)
 
     def handleMouseMotion(self, event):
         row, column = self.__eventCoords(event)
@@ -96,23 +116,7 @@ class CellGrid(Canvas):
         if cell not in self.switched:
             cell._switch()
             cell.draw()
-            self.switched.append(cell)
-
-    def initilize_dead(self):
-        for line in self.grid:
-            for cell in line:
-                self.dead.append(cell)
-        
-
-    def update_dead_or_alive(self, cell):
-        if cell in self.dead:
-            self.dead.remove(cell)
-            self.alive.append(cell)
-        elif cell in self.alive:
-            self.alive.remove(cell)
-            self.dead.append(cell)
-        neighbors = self.get_neighbors(cell)
-        
+            self.switched.append(cell)  
 
     def get_neighbors(self, cell):
         coords = [(1,0),(-1,0),(0,1),(0,-1),(1,1),(-1,-1),(-1,1),(1,-1)]
@@ -132,7 +136,6 @@ class CellGrid(Canvas):
             for c in coords:
                 if c[0] ==  -1:
                     coords.remove(c)
-        print(coords)
         neighbors = []
         for n in coords:
             neighbors.append(self.grid[cell.abs+n[1]][cell.ord+n[0]])
@@ -142,24 +145,27 @@ class CellGrid(Canvas):
 
     def animate(self):
         while True:
+            time.sleep(.5)
+            switch = []
             for line in self.grid:
                 for cell in line:
                     if cell.fill == True:
-                        #check that 2 or 3 neighbors are alive
-                        if self.check_2_or_3_alive(cell):
-                            cell.fill = True
-                    if cell.fill == True:
-                        #check if it has more than 3 alive neighbors
-                        if self.check_more_than_3_alive(cell):
-                            cell.fill = False
-                    if cell.fill == True:
-                        #check if it has fewer than 2 alive neighbords
-                        if self.check_fewer_than_2_alive(cell):
-                            cell.fill = False
-                    if cell.fill == False:
-                        #check if it has exactly 3 alive neightbors
-                        if self.check_exactly_3_alive:
-                            cell.fill = True
+                        if (self.check_fewer_than_2_alive(cell) or self.check_more_than_3_alive(cell)):
+                            switch.append(cell)
+                    elif cell.fill == False:
+                        if self.check_exactly_3_alive(cell):
+                            switch.append(cell)
+            if len(switch) > 0:
+                self.update(switch)
+
+    def update(self, switches):
+        print(len(switches))
+        print("Updating")
+        for c in switches:
+            cell = self.grid[c.ord][c.abs]
+            cell._switch()
+            c.update()
+        self.switched.clear()
 
     def check_2_or_3_alive(self, cell):
         neighbors = self.get_neighbors(cell)
@@ -210,8 +216,15 @@ class CellGrid(Canvas):
 
 if __name__ == "__main__":
     app = Tk()
+    app.geometry('1000x1000')
 
     grid = CellGrid(app, 50, 50, 10)
     grid.pack()
+    btn = Button(app, text = 'Start', bd = '5',
+                              command = grid.animate)
+ 
+    btn.pack(side = 'left')   
+
+
 
     app.mainloop()
