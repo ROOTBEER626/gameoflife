@@ -2,7 +2,8 @@
 #if a cell is alive and it has more than 3 alive neighbours, it dies of overcrowding
 #i a cell is alive and it has fewer than 2 alive neighbours, it dies of loneliness
 #if a cell is dead and it has exatly 3 neighbours it becomes alive again
-from tkinter import *
+#from tkinter import *
+import tkinter as tk
 import time
 
 dead_color = 'white'
@@ -64,22 +65,15 @@ class Cell():
         self.master.create_rectangle(xmin,ymin, xmax, ymax, fill = 'black', outline = outline)
 
 
-class CellGrid(Canvas):
-    def __init__(self, master, rowNumber, columnNumber, cellSize, *args, **kwargs):
-        Canvas.__init__(self, master, width = cellSize * columnNumber, height = cellSize * rowNumber, *args, **kwargs)
+class CellGrid:
+    def __init__(self,length, size, active_color='black', inactive_color='white' ):
 
-        self.cellSize = cellSize
-        
-        self.grid = []
-        for row in range(rowNumber):
-            line = []
-            for column in range(columnNumber):
-                line.append(Cell(self, column, row, cellSize))
+        self.length = length
+        self.active_color = active_color
+        self.inactive_color = inactive_color
 
-            self.grid.append(line)
+        self.square = self.make_squares(size)
         
-        #memorize the cells that have been modified to avoid many switching of state during mouse motion
-        self.switched = []
 
         #bind click action
         self.bind("<Button-1>", self.handleMouseClick)
@@ -88,14 +82,54 @@ class CellGrid(Canvas):
         #bind release button action - clear the memory of modified cells
         self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
 
+    def make_squares(self, size):
+        squares = {}
+        for y in range(0, self.length, size):
+            for x in range(0, self.length, size):
+                if random.random() < self.tolerance:
+                    squares[(x,y)] = Square((x,y),
+                                            self.length,
+                                            size,
+                                            active_color=self.active_color,
+                                            inactive_color=self.inactive_color)
+                else:
+                    squares[(x,y)] = Square((x,y),
+                                            self.length,
+                                            size,
+                                            state = True,
+                                            active_color=self.active_color,
+                                            inactive_color=self.inactive_color)
+        return squares
 
-        self.draw()
+    def set_squares(self, on_coordinates):
+        for coord, square in self.squares:
+            if coord in on_coordinates:
+                square.state=True
 
-    def draw(self):
-        for row in self.grid:
-            for cell in row:
-                cell.draw()
+    def rules(self):
+        for coord, square in self.squares.items():
+            alive_neighbours = 0
 
+            neighbours = square.neighbours()
+
+            for neighbour in neighbours:
+                if self.squares[neighbour].state:
+                    alive_neighbours += 1
+
+            if square.state:
+                #Rule 1
+                if alive_neighbours < 2:
+                    square.state=False
+                #Rule 3
+                elif alive_neighbours > 3:
+                    square.state = False
+                #Rule 2
+                else:
+                    continue
+            else:
+                #Rule 4
+                if alive_neighbours == 3:
+                    square.state = True
     def __eventCoords(self, event):
         row = int(event.y / self.cellSize)
         column = int(event.x / self.cellSize)
@@ -222,7 +256,7 @@ class App:
             raise Exception("The square don't fit evenly on the screen." +
                             "Box size needs to be a factor of window size.")
 
-        self.grid = Grid(self.lenght, self.size, active_color='#008080', inactive_color='white')
+        self.grid = Grid(self.length, self.size, active_color='#008080', inactive_color='white')
 
         self.root = Tk()
 
@@ -252,7 +286,7 @@ class App:
 
                 canvas_item[coords] = self.canvas.create_rectangle(t_l_x, t_l_y, b_r_x, b_r_y, fill=square.get_color())
 
-            retur canvas_items
+            return canvas_items
 
         else:
 
