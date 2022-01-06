@@ -215,16 +215,4 @@ class CellGrid(Canvas):
 
 
 if __name__ == "__main__":
-    app = Tk()
-    app.geometry('1000x1000')
-
-    grid = CellGrid(app, 50, 50, 10)
-    grid.pack()
-    btn = Button(app, text = 'Start', bd = '5',
-                              command = grid.animate)
- 
-    btn.pack(side = 'left')   
-
-
-
-    app.mainloop()
+    app = App(1000, 25)
