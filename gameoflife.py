@@ -213,6 +213,57 @@ class CellGrid(Canvas):
             return False
 
 
+class App:
+    def __init__(self, length, size):
+        self.length = length
+        self.size = size
+
+        if not self.length % self.size == 0:
+            raise Exception("The square don't fit evenly on the screen." +
+                            "Box size needs to be a factor of window size.")
+
+        self.grid = Grid(self.lenght, self.size, active_color='#008080', inactive_color='white')
+
+        self.root = Tk()
+
+        self.canvas = Canvas(self.root, height = self.length, width = self.length)
+
+        self.canvas.pack()
+
+        self.items = self.update_canvas()
+
+        self.root.after(5, self.refresh_screen)
+
+        self.root.mainloop()
+
+    def refresh_screen(self):
+        self.grid.rules()
+        self.update_canvas(canvas_done=True, canvas_items=self.items)
+
+        self.root.after(5, self.refresh_screen)
+
+    def update_canvas(self, canvaas_done=False, canvas_items={}):
+        square_items = self.grid.squares
+
+        if not canvas_done:
+            for coords, square in square_items.items():
+                (b_r_x, b_r_y) = square.rect()
+                (t_l_x, t_l_y) = coords
+
+                canvas_item[coords] = self.canvas.create_rectangle(t_l_x, t_l_y, b_r_x, b_r_y, fill=square.get_color())
+
+            retur canvas_items
+
+        else:
+
+            if canvas_items:
+                for coords, item in canvas_items.items():
+
+                    self.canvas.itemconfig(item, fill=square_items[coords].getcolor())
+
+            else:
+                raise ValueError("No canvas_item given for re-iterating over grid.")
+
 
 if __name__ == "__main__":
     app = App(1000, 25)
