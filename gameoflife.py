@@ -4,83 +4,56 @@
 #if a cell is dead and it has exatly 3 neighbours it becomes alive again
 #from tkinter import *
 import tkinter as tk
-import time
+import random
 
-dead_color = 'white'
-alive_color = 'blue'
+class Square:
 
-class Cell():
-    FILLED_COLOR_BG = 'green'
-    EMPTY_COLOR_BG = 'white'
-    FILLED_COLOR_BORDER = 'green'
-    EMPTY_COLOR_BORDER = 'black'
-
-    def __init__(self, master, x, y, size):
-        """Constructor of the object caled by Cell(...) """
-        self.master = master
-        self.abs = x
-        self.ord = y
-        self.size = size
-        self.fill = False
-        
-
-    def _switch(self):
-        self.fill = not self.fill
-
-    def draw(self):
-        if self.master != None:
-            fill = Cell.FILLED_COLOR_BG
-            outline = Cell.FILLED_COLOR_BORDER
-
-            if not self.fill:
-                fill = Cell.EMPTY_COLOR_BG
-                outline = Cell.EMPTY_COLOR_BORDER
-
-            xmin = self.abs * self.size
-            xmax = xmin + self.size
-            ymin = self.ord * self.size
-            ymax = ymin + self.size
-
-
-            #This returns an int not a rectangle object
-            self.master.create_rectangle(xmin,ymin, xmax, ymax, fill = fill, outline = outline)
-
-
-
-    def update(self):
-
-        #if this doesn't work we are gonna have to update it the same way we do it on the mouse click event
-        fill = Cell.FILLED_COLOR_BG
-        outline = Cell.FILLED_COLOR_BORDER
-
-        if not self.fill:
-            fill = Cell.EMPTY_COLOR_BG
-            outline = Cell.EMPTY_COLOR_BORDER
-
-        xmin = self.abs * self.size
-        xmax = xmin + self.size
-        ymin = self.ord * self.size
-        ymax = ymin + self.size
-        
-        self.master.create_rectangle(xmin,ymin, xmax, ymax, fill = 'black', outline = outline)
-
-
-class CellGrid:
-    def __init__(self,length, size, active_color='black', inactive_color='white' ):
-
+    def __init__(self, coords, length, size, state=False, active_color='black', inactive_color='white'):
         self.length = length
+        self.coords = coords
+        self.size = size
+        self.state = state
         self.active_color = active_color
         self.inactive_color = inactive_color
 
-        self.square = self.make_squares(size)
+    def rect(self):
+        return (self.coords[0]+self.size, self.coords[1]+self.size)
+
+    def inbounds(self, coord):
+        (x,y) = coord
+
+        return (x >= 0 and x <= self.length-self.size) and (y >= 0 and y <= self.length-self.size)
+
+    def neighbours(self):
+        (x,y) = self.coords
+
+        return list(filter(self.inbounds, [
+            (x-self.size, y+self.size), (x, y+self.size), (x+self.size, y+self.size),
+            (x-self.size, y),
+            (x-self.size, y-self.size), (x, y-self.size), (x+self.size,y-self.size),
+            ]))
+
+    def get_color(self):
+        return self.active_color if self.state else self.inactive_color
+
+
+class Grid:
+    def __init__(self,length, size, tolerance, active_color='black', inactive_color='white' ):
+
+        self.length = length
+        self.tolerance = tolerance
+        self.active_color = active_color
+        self.inactive_color = inactive_color
+
+        self.squares = self.make_squares(size)
         
 
         #bind click action
-        self.bind("<Button-1>", self.handleMouseClick)
+        ##self.bind("<Button-1>", self.handleMouseClick)
         #bind moving whiiile clikcing
-        self.bind("<B1-Motion>", self.handleMouseMotion)
+        #self.bind("<B1-Motion>", self.handleMouseMotion)
         #bind release button action - clear the memory of modified cells
-        self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
+        #self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
 
     def make_squares(self, size):
         squares = {}
@@ -248,19 +221,20 @@ class CellGrid:
 
 
 class App:
-    def __init__(self, length, size):
+    def __init__(self, length, size, tolerance):
         self.length = length
         self.size = size
+        self.tolerance = tolerance
 
         if not self.length % self.size == 0:
             raise Exception("The square don't fit evenly on the screen." +
                             "Box size needs to be a factor of window size.")
 
-        self.grid = Grid(self.length, self.size, active_color='#008080', inactive_color='white')
+        self.grid = Grid(self.length, self.size, self.tolerance,  active_color='#008080', inactive_color='white')
 
-        self.root = Tk()
+        self.root = tk.Tk()
 
-        self.canvas = Canvas(self.root, height = self.length, width = self.length)
+        self.canvas = tk.Canvas(self.root, height = self.length, width = self.length)
 
         self.canvas.pack()
 
@@ -276,7 +250,7 @@ class App:
 
         self.root.after(5, self.refresh_screen)
 
-    def update_canvas(self, canvaas_done=False, canvas_items={}):
+    def update_canvas(self, canvas_done=False, canvas_items={}):
         square_items = self.grid.squares
 
         if not canvas_done:
@@ -284,7 +258,7 @@ class App:
                 (b_r_x, b_r_y) = square.rect()
                 (t_l_x, t_l_y) = coords
 
-                canvas_item[coords] = self.canvas.create_rectangle(t_l_x, t_l_y, b_r_x, b_r_y, fill=square.get_color())
+                canvas_items[coords] = self.canvas.create_rectangle(t_l_x, t_l_y, b_r_x, b_r_y, fill=square.get_color())
 
             return canvas_items
 
@@ -293,11 +267,11 @@ class App:
             if canvas_items:
                 for coords, item in canvas_items.items():
 
-                    self.canvas.itemconfig(item, fill=square_items[coords].getcolor())
+                    self.canvas.itemconfig(item, fill=square_items[coords].get_color())
 
             else:
                 raise ValueError("No canvas_item given for re-iterating over grid.")
 
 
 if __name__ == "__main__":
-    app = App(1000, 25)
+    app = App(1000, 25, tolerance=0.7)
