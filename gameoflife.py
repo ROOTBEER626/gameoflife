@@ -5,6 +5,8 @@
 #from tkinter import *
 import tkinter as tk
 import random
+import time
+
 
 class Square:
 
@@ -15,15 +17,18 @@ class Square:
         self.state = state
         self.active_color = active_color
         self.inactive_color = inactive_color
-
+    
+    """Gives the bottom right values of square"""
     def rect(self):
         return (self.coords[0]+self.size, self.coords[1]+self.size)
-
+    
+    """Returns whether a coordinate is inbounds in the grid"""
     def inbounds(self, coord):
         (x,y) = coord
 
         return (x >= 0 and x <= self.length-self.size) and (y >= 0 and y <= self.length-self.size)
 
+    """Returns all neighbours to the object"""
     def neighbours(self):
         (x,y) = self.coords
 
@@ -33,6 +38,7 @@ class Square:
             (x-self.size, y-self.size), (x, y-self.size), (x+self.size,y-self.size),
             ]))
 
+    """Returns a color whether the object is alive or dead"""
     def get_color(self):
         return self.active_color if self.state else self.inactive_color
 
@@ -47,14 +53,7 @@ class Grid:
 
         self.squares = self.make_squares(size)
         
-
-        #bind click action
-        ##self.bind("<Button-1>", self.handleMouseClick)
-        #bind moving whiiile clikcing
-        #self.bind("<B1-Motion>", self.handleMouseMotion)
-        #bind release button action - clear the memory of modified cells
-        #self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
-
+    """Creates a dictionary of square objects"""
     def make_squares(self, size):
         squares = {}
         for y in range(0, self.length, size):
@@ -74,6 +73,8 @@ class Grid:
                                             inactive_color=self.inactive_color)
         return squares
 
+    """Take a list of coordinates and make them alive cells
+    Not used but can be used to set alive squares"""
     def set_squares(self, on_coordinates):
         for coord, square in self.squares:
             if coord in on_coordinates:
@@ -103,6 +104,50 @@ class Grid:
                 #Rule 4
                 if alive_neighbours == 3:
                     square.state = True
+
+class App:
+    def __init__(self, length, size, tolerance):
+        self.length = length
+        self.size = size
+        self.tolerance = tolerance
+
+        if not self.length % self.size == 0:
+            raise Exception("The square don't fit evenly on the screen." +
+                            "Box size needs to be a factor of window size.")
+
+        self.grid = Grid(self.length, self.size, self.tolerance,  active_color='#008080', inactive_color='white')
+
+        self.root = tk.Tk()
+
+       #Increase the size of the canvas so that I will be able to insert the buttons 
+        self.canvas = tk.Canvas(self.root, height = self.length+100, width = self.length+100)
+
+
+        self.canvas.pack()
+
+        self.items = self.update_canvas()
+
+        #I believe this is where I want to see the button clicked to start the animation
+            #Whether it be a random configuration, a user defined configuration, or one of the preset options
+        btn = tk.Button(self, text = 'Start', bd='5', command = self.start)
+
+        #self.root.after(5, self.refresh_screen)
+
+        #self.root.mainloop()
+
+        #Old code just here for the time being 
+        #bind click action
+        ##self.bind("<Button-1>", self.handleMouseClick)
+        #bind moving whiiile clikcing
+        #self.bind("<B1-Motion>", self.handleMouseMotion)
+        #bind release button action - clear the memory of modified cells
+        #self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
+
+    def start(self):
+        self.root.after(5, self.refresh_screen)
+        
+        self.root.mainloop()
+
     def __eventCoords(self, event):
         row = int(event.y / self.cellSize)
         column = int(event.x / self.cellSize)
@@ -125,125 +170,6 @@ class Grid:
             cell.draw()
             self.switched.append(cell)  
 
-    def get_neighbors(self, cell):
-        coords = [(1,0),(-1,0),(0,1),(0,-1),(1,1),(-1,-1),(-1,1),(1,-1)]
-        if cell.abs == 49:
-            for c in coords:
-                if c[1] == 1:
-                    coords.remove(c)
-        if cell.abs == 0:
-            for c in coords:
-                if c[1] == -1:
-                    coords.remove(c)
-        if cell.ord == 49:
-            for c in coords:
-                if c[0] == 1:
-                    coords.remove(c)
-        if cell.ord == 0:
-            for c in coords:
-                if c[0] ==  -1:
-                    coords.remove(c)
-        neighbors = []
-        for n in coords:
-            neighbors.append(self.grid[cell.abs+n[1]][cell.ord+n[0]])
-        return neighbors
-
-
-
-    def animate(self):
-        while True:
-            time.sleep(.5)
-            switch = []
-            for line in self.grid:
-                for cell in line:
-                    if cell.fill == True:
-                        if (self.check_fewer_than_2_alive(cell) or self.check_more_than_3_alive(cell)):
-                            switch.append(cell)
-                    elif cell.fill == False:
-                        if self.check_exactly_3_alive(cell):
-                            switch.append(cell)
-            if len(switch) > 0:
-                self.update(switch)
-
-    def update(self, switches):
-        print(len(switches))
-        print("Updating")
-        for c in switches:
-            cell = self.grid[c.ord][c.abs]
-            cell._switch()
-            c.update()
-        self.switched.clear()
-
-    def check_2_or_3_alive(self, cell):
-        neighbors = self.get_neighbors(cell)
-        alive = 0
-        for c in neighbors:
-            if c.fill == True:
-                alive += 1
-        if alive == 2 or alive == 3:
-            return True
-        else:
-            return False
-
-
-    def check_more_than_3_alive(self, cell):
-        neighbors = self.get_neighbors(cell)
-        alive = 0
-        for c in neighbors:
-            if c.fill == True:
-                alive += 1
-        if alive >= 3:
-            return True
-        else:
-            return False
-
-    def check_fewer_than_2_alive(self,cell):
-        neighbors = self.get_neighbors(cell)
-        alive = 0
-        for c in neighbors:
-            if c.fill == True:
-                alive += 1
-        if alive <= 2: 
-            return True
-        else:
-            return False
-
-    def check_exactly_3_alive(self,cell):
-        neighbors = self.get_neighbors(cell)
-        alive = 0
-        for c in neighbors:
-            if c.fill == True:
-                alive += 1
-        if alive == 3:
-            return True
-        else: 
-            return False
-
-
-class App:
-    def __init__(self, length, size, tolerance):
-        self.length = length
-        self.size = size
-        self.tolerance = tolerance
-
-        if not self.length % self.size == 0:
-            raise Exception("The square don't fit evenly on the screen." +
-                            "Box size needs to be a factor of window size.")
-
-        self.grid = Grid(self.length, self.size, self.tolerance,  active_color='#008080', inactive_color='white')
-
-        self.root = tk.Tk()
-
-        self.canvas = tk.Canvas(self.root, height = self.length, width = self.length)
-
-        self.canvas.pack()
-
-        self.items = self.update_canvas()
-
-        self.root.after(5, self.refresh_screen)
-
-        self.root.mainloop()
-
     def refresh_screen(self):
         self.grid.rules()
         self.update_canvas(canvas_done=True, canvas_items=self.items)
@@ -251,6 +177,7 @@ class App:
         self.root.after(5, self.refresh_screen)
 
     def update_canvas(self, canvas_done=False, canvas_items={}):
+        #time.sleep(.1)
         square_items = self.grid.squares
 
         if not canvas_done:
