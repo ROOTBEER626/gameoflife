@@ -1,4 +1,4 @@
-#If a cell is alive, and 2 or 3 of it's neighbours are alive, the cell reamins alive
+#if a cell is alive, and 2 or 3 of it's neighbours are alive, the cell reamins alive
 #if a cell is alive and it has more than 3 alive neighbours, it dies of overcrowding
 #i a cell is alive and it has fewer than 2 alive neighbours, it dies of loneliness
 #if a cell is dead and it has exatly 3 neighbours it becomes alive again
@@ -120,20 +120,21 @@ class App:
         self.root = tk.Tk()
 
        #Increase the size of the canvas so that I will be able to insert the buttons 
-        self.canvas = tk.Canvas(self.root, height = self.length+100, width = self.length+100)
-
+        self.canvas = tk.Canvas(self.root, height = self.length, width = self.length+100)
 
         self.canvas.pack()
 
+        start_button = tk.Button(self.root, text = "Start", command = self.start)
+        start_button.configure(width = 10, activebackground = "#33B5E5")
+        start_button_window = self.canvas.create_window(1065,150, window=start_button)
+
         self.items = self.update_canvas()
 
-        #I believe this is where I want to see the button clicked to start the animation
-            #Whether it be a random configuration, a user defined configuration, or one of the preset options
-        btn = tk.Button(self, text = 'Start', bd='5', command = self.start)
+        #blocks the program here
+        self.root.mainloop()
+
 
         #self.root.after(5, self.refresh_screen)
-
-        #self.root.mainloop()
 
         #Old code just here for the time being 
         #bind click action
@@ -145,8 +146,6 @@ class App:
 
     def start(self):
         self.root.after(5, self.refresh_screen)
-        
-        self.root.mainloop()
 
     def __eventCoords(self, event):
         row = int(event.y / self.cellSize)
