@@ -110,6 +110,7 @@ class App:
         self.length = length
         self.size = size
         self.tolerance = tolerance
+        self.go = False
 
         if not self.length % self.size == 0:
             raise Exception("The square don't fit evenly on the screen." +
@@ -123,18 +124,38 @@ class App:
         self.canvas = tk.Canvas(self.root, height = self.length, width = self.length+100)
 
         self.canvas.pack()
+        
+        self.items = self.update_canvas()
 
+        #start button
         start_button = tk.Button(self.root, text = "Start", command = self.start)
         start_button.configure(width = 10, activebackground = "#33B5E5")
         start_button_window = self.canvas.create_window(1065,150, window=start_button)
 
-        self.items = self.update_canvas()
+
+        #pause button
+        pause_button = tk.Button(self.root, text = "Pause", command = self.pause)
+        pause_button.configure(width = 10, activebackground = "#33B5E5")
+        pause_button_window = self.canvas.create_window(1065,175, window=pause_button)
+
+
+        #step button
+        step_button = tk.Button(self.root, text = "Step", command = self.step)
+        step_button.configure(width = 10, activebackground = "#33B5E5")
+        step_button_window = self.canvas.create_window(1065,200, window=step_button)
+
+        #reset button
+        reset_button = tk.Button(self.root, text='Reset', command=self.reset)
+        reset_button.configure(width=10,activebackground="#33B5E5")
+        reset_button.window = self.canvas.create_window(1065, 225,window=reset_button)
+
+        #clear button
+        clear_button = tk.Button(self.root, text="clear", command=self.clear)
+        clear_button.configure(width=10,activebackground="#33B5E5")
+        clear_button_window = self.canvas.create_window(1065,250, window = clear_button)
 
         #blocks the program here
         self.root.mainloop()
-
-
-        #self.root.after(5, self.refresh_screen)
 
         #Old code just here for the time being 
         #bind click action
@@ -145,7 +166,23 @@ class App:
         #self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
 
     def start(self):
+        self.go = True
         self.root.after(5, self.refresh_screen)
+
+    def pause(self):
+        self.go = False
+
+    def step(self):
+        self.go = True
+        self.root.after(5, self.refresh_screen(step=True))
+
+    def reset(self):
+        #reset the board
+        return
+    
+    def clear(self):
+        #clear the board
+        return
 
     def __eventCoords(self, event):
         row = int(event.y / self.cellSize)
@@ -169,10 +206,13 @@ class App:
             cell.draw()
             self.switched.append(cell)  
 
-    def refresh_screen(self):
+    def refresh_screen(self, step = False):
+        if self.go == False:
+            return
         self.grid.rules()
         self.update_canvas(canvas_done=True, canvas_items=self.items)
-
+        if step == True:
+            return
         self.root.after(5, self.refresh_screen)
 
     def update_canvas(self, canvas_done=False, canvas_items={}):
