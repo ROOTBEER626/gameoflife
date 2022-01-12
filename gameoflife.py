@@ -51,8 +51,8 @@ class Grid:
         self.active_color = active_color
         self.inactive_color = inactive_color
 
-        self.squares = self.make_squares(size)
-        
+        self.make_squares(size) 
+    
     """Creates a dictionary of square objects"""
     def make_squares(self, size):
         squares = {}
@@ -71,7 +71,8 @@ class Grid:
                                             state = True,
                                             active_color=self.active_color,
                                             inactive_color=self.inactive_color)
-        return squares
+        self.squares = squares
+
 
     """Take a list of coordinates and make them alive cells
     Not used but can be used to set alive squares"""
@@ -79,6 +80,19 @@ class Grid:
         for coord, square in self.squares:
             if coord in on_coordinates:
                 square.state=True
+
+    """Creates a dictionary of square objects"""
+    def clear(self, size):
+        squares = {}
+        for y in range(0, self.length, size):
+            for x in range(0, self.length, size):
+                squares[(x,y)] = Square((x,y),
+                                        self.length,
+                                        size,
+                                        active_color=self.active_color,
+                                        inactive_color=self.inactive_color)
+        self.squares =  squares
+
 
     def rules(self):
         for coord, square in self.squares.items():
@@ -150,9 +164,14 @@ class App:
         reset_button.window = self.canvas.create_window(1065, 225,window=reset_button)
 
         #clear button
-        clear_button = tk.Button(self.root, text="clear", command=self.clear)
+        clear_button = tk.Button(self.root, text='Clear', command=self.clear)
         clear_button.configure(width=10,activebackground="#33B5E5")
         clear_button_window = self.canvas.create_window(1065,250, window = clear_button)
+
+        #randomize button
+        randomize_button = tk.Button(self.root, text='Randomize', command=self.randomize)
+        randomize_button.configure(width=10,activebackground="#33B5E5")
+        randomize_button_window = self.canvas.create_window(1065,275,window=randomize_button)
 
         #blocks the program here
         self.root.mainloop()
@@ -177,12 +196,19 @@ class App:
         self.root.after(5, self.refresh_screen(step=True))
 
     def reset(self):
-        #reset the board
-        return
+        self.go = False
     
     def clear(self):
-        #clear the board
-        return
+        self.go = False
+        self.delete()
+        self.grid.clear(self.size)
+        self.items = self.update_canvas()
+
+    def randomize(self):
+        self.go = False
+        self.delete()
+        self.grid.make_squares(self.size)
+        self.items = self.update_canvas()
 
     def __eventCoords(self, event):
         row = int(event.y / self.cellSize)
@@ -215,6 +241,16 @@ class App:
             return
         self.root.after(5, self.refresh_screen)
 
+    def delete(self):
+        square_items = self.grid.squares
+
+        for coords, square in square_items.items():
+            (b_r_x, b_r_y) = square.rect()
+            (t_l_x, t_l_y) = coords
+
+            self.canvas.delete(self.items[coords])
+        return
+
     def update_canvas(self, canvas_done=False, canvas_items={}):
         #time.sleep(.1)
         square_items = self.grid.squares
@@ -224,7 +260,7 @@ class App:
                 (b_r_x, b_r_y) = square.rect()
                 (t_l_x, t_l_y) = coords
 
-                canvas_items[coords] = self.canvas.create_rectangle(t_l_x, t_l_y, b_r_x, b_r_y, fill=square.get_color())
+                canvas_items[coords] = self.canvas.create_rectangle(t_l_x, t_l_y, b_r_x, b_r_y, fill=square.get_color(), outline='black')
 
             return canvas_items
 
