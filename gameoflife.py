@@ -158,20 +158,16 @@ class App:
         step_button.configure(width = 10, activebackground = "#33B5E5")
         step_button_window = self.canvas.create_window(1065,200, window=step_button)
 
-        #reset button
-        reset_button = tk.Button(self.root, text='Reset', command=self.reset)
-        reset_button.configure(width=10,activebackground="#33B5E5")
-        reset_button.window = self.canvas.create_window(1065, 225,window=reset_button)
 
         #clear button
         clear_button = tk.Button(self.root, text='Clear', command=self.clear)
         clear_button.configure(width=10,activebackground="#33B5E5")
-        clear_button_window = self.canvas.create_window(1065,250, window = clear_button)
+        clear_button_window = self.canvas.create_window(1065,225, window = clear_button)
 
         #randomize button
         randomize_button = tk.Button(self.root, text='Randomize', command=self.randomize)
         randomize_button.configure(width=10,activebackground="#33B5E5")
-        randomize_button_window = self.canvas.create_window(1065,275,window=randomize_button)
+        randomize_button_window = self.canvas.create_window(1065,250,window=randomize_button)
 
         #blocks the program here
         self.root.mainloop()
@@ -186,17 +182,15 @@ class App:
 
     def start(self):
         self.go = True
-        self.root.after(5, self.refresh_screen)
+        self.root.after(10, self.refresh_screen)
 
     def pause(self):
         self.go = False
 
     def step(self):
         self.go = True
-        self.root.after(5, self.refresh_screen(step=True))
+        self.root.after(10, self.refresh_screen(step=True))
 
-    def reset(self):
-        self.go = False
     
     def clear(self):
         self.go = False
@@ -239,7 +233,7 @@ class App:
         self.update_canvas(canvas_done=True, canvas_items=self.items)
         if step == True:
             return
-        self.root.after(5, self.refresh_screen)
+        self.root.after(10, self.refresh_screen)
 
     def delete(self):
         square_items = self.grid.squares
